@@ -1,0 +1,45 @@
+#!/bin/bash
+#Scripts that checks for SSL certificates expiration date and sends data to zabbix
+#should run every day at 7AM.
+#Version 2.0
+#Author trugendo
+Date=`date +%F`
+CERT1_EXP=/tmp/.ssl_1_expirydate
+CERT2_EXP=/tmp/.ssl_2_expirydate
+CERT3_EXP=/tmp/.ssl_3_expirydate
+CERT4_EXP=/tmp/.ssl_4_expirydate
+CERT5_EXP=/tmp/.ssl_5_expirydate
+SSL_REM_DAYS=/tmp/.ssl_certs_remainingdays
+TODAY=`date +"%b %d %Y"`
+
+[ -f $CERT1_EXP ] || touch $CERT1_EXP
+
+[ -f $CERT2_EXP ] || touch $CERT2_EXP
+
+[ -f $CERT3_EXP ] || touch $CERT3_EXP
+
+[ -f $CERT4_EXP ] || touch $CERT4_EXP
+
+[ -f $CERT5_EXP ] || touch $CERT5_EXP
+[ -f $SSL_REM_DAYS ] || touch $SSL_REM_DAYS
+
+
+CERT1_STAT=`cat $CERT1_EXP`
+CERT2_STAT=`cat $CERT2_EXP`
+CERT3_STAT=`cat $CERT3_EXP`
+CERT4_STAT=`cat $CERT4_EXP`
+CERT5_STAT=`cat $CERT5_EXP`
+
+openssl x509 -enddate -noout -in <PATH_TOCERT1.crt> | awk -F'=' '{print $2}' | awk '{print $1,$2,$4}' > $CERT1_EXP
+openssl x509 -enddate -noout -in <PATH_TOCERT2.crt>  | awk -F'=' '{print $2}' | awk '{print $1,$2,$4}' > $CERT2_EXP
+openssl x509 -enddate -noout -in <PATH_TOCERT3.crt>  | awk -F'=' '{print $2}' | awk '{print $1,$2,$4}' > $CERT3_EXP
+openssl x509 -enddate -noout -in <PATH_TOCERT4.crt>  | awk -F'=' '{print $2}' | awk '{print $1,$2,$4}' > $CERT4_EXP
+openssl x509 -enddate -noout -in <PATH_TOCERT5.crt>  | awk -F'=' '{print $2}' | awk '{print $1,$2,$4}' > $CERT5_EXP
+
+CERT1_diff=$((( $(date -d "$CERT1_STAT" +%s) - $(date -d "$TODAY" +%s) )/86400))
+CERT2_diff=$((( $(date -d "$CERT2_STAT" +%s) - $(date -d "$TODAY" +%s) )/86400))
+CERT3_diff=$((( $(date -d "$CERT3_STAT" +%s) - $(date -d "$TODAY" +%s) )/86400))
+CERT4_diff=$((( $(date -d "$CERT4_STAT" +%s) - $(date -d "$TODAY" +%s) )/86400))
+CERT5_diff=$((( $(date -d "$CERT5_STAT" +%s) - $(date -d "$TODAY" +%s) )/86400))
+
+echo -e "ssl.cert1.expiry","$CERT1_diff\n""ssl.cert2.expiry","$CERT2_diff\n""ssl.cert3.expiry","$CERT3_diff\n""ssl.cert4.expiry","$CERT4_diff\n""ssl.cert5.expiry","$CERT5_diff" > $SSL_REM_DAYS
